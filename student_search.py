@@ -35,6 +35,11 @@ Task:
 
 ######### Instance Variables #########
 
+# These instance variables utilize country, city and state information
+#	as provided from the imported module geonamescache. This allows the
+#	program to differentiate between the different kinds of locations
+#	that a student may include. 
+
 gc = geonamescache.GeonamesCache()
 countries_dict = gc.get_countries_by_names()
 countries = countries_dict.keys()
@@ -116,6 +121,7 @@ class LocationDatabase(object):
 
 	def addToDict(self, student, attribute, location_dict):
 		if attribute not in location_dict:
+			# Every time a new location attribute is encountered, initialize a new set
 			student_set = set()
 			student_set.add(student)
 			location_dict[attribute] = student_set
@@ -145,11 +151,13 @@ class LocationDatabase(object):
 ######### Main Program #########
 
 def main(args):
-	if args > 1:
+	if len(args) > 1:
 		database = retrieveLines(args[1])
+		# Obtain lists with necessary location information:
 		countries_in_database = database.getCountries()
 		cities_in_database = database.getCities()
 		regions_in_database = database.getRegions()
+		# Number of unique students within the provided database
 		numStudents = len(database.getStudents())
 		print "The database you provided has %i students and it took %s seconds to load" % (numStudents, time.time() - start_time)
 		user_search(database, countries_in_database, cities_in_database, regions_in_database)
@@ -158,11 +166,15 @@ def main(args):
 
 def user_search(database, countries_in_database, cities_in_database, regions_in_database):
 	decision = str(raw_input("Would you like to look up students by country, city or region (yes or no)?: "))
+	# Any string other than either some form of "yes" or "y" will cause the search to terminate
 	while decision.lower() == "yes" or decision.lower() == "y":
 		flag = retrieveFlagFromUser()
+		# Note that flag checks are CASE SENSITIVE
 		if flag == "C":
+			print "Please note that countries are proper nouns and must be capitalized accordingly for results."
 			searchDatabase(database, countries_in_database, "country")
 		elif flag == "c":
+			print "Please note that countries are proper nouns and must be capitalized accordingly for results."
 			searchDatabase(database, cities_in_database, "city")
 		else:
 			searchDatabase(database, regions_in_database, "region")
@@ -178,7 +190,7 @@ def retrieveFlagFromUser():
 def searchDatabase(database, locations, category):
 	inputted_word = str(raw_input("Please enter a " + category + ": "))
 	while (inputted_word not in locations):
-		inputted_word = str(raw_input("Please enter a valid " + category + ": "))
+		inputted_word = str(raw_input("Please enter a " + category + " within your database: "))
 	student_set = database.studentsFrom(inputted_word, category)
 	print "Here are your search results:"
 	for student in student_set:
@@ -186,32 +198,20 @@ def searchDatabase(database, locations, category):
 	print "There are a total of %i students in this %s." % (len(student_set), category)
 
 def retrieveLines(file_name):
+	# Initialize LocationDatabase instance
 	database = LocationDatabase()
 	while True: # Exiting out of this method requires a proper file be provided
 		try:
 			# utilize "with ... as ...:" syntax to take care of file closing
 			with open(file_name, 'r') as data_file: 
 				for line in data_file:
+					# Break up the comma separated lines with the comma as the delimiter
 					info_arr = line.split(',')
 					(first, last, loc_index) = findName(info_arr)
-					student = Student(first, last)
-					location_info = clean(info_arr[loc_index:])
-					
-					################# ALL IMPORTANT PROCESSING BELOW ##################
-
-					for elem in location_info:
-						if unicode(elem, "UTF-8") in countries:
-							student.setCountry(unicode(elem, "UTF-8"))
-						elif unicode(elem, "UTF-8") in cities:
-							student.setCity(unicode(elem, "UTF-8"))
-						elif unicode(elem, "UTF-8") in states:
-							student.setState(unicode(elem, "UTF-8"))
-						else:
-							student.setRegion(unicode(elem, "UTF-8"))
+					# Take in a newly created Student instance and set its location parameters 
+					#	(as defined in the Student class) with the location information from info_arr
+					student = setLocationInfo(Student(first, last), clean(info_arr[loc_index:]))
 					database.addStudent(student)
-
-			###############################################
-
 			return database
 
 		except IOError as e:
@@ -221,11 +221,38 @@ def retrieveLines(file_name):
 			print "You have not correctly specified a file name. Please try again."
 			file_name = str(raw_input("Please specify a file name: "))
 
+def setLocationInfo(student, location_info):
+	for elem in location_info:
+		# Utilize unicode version of element to account for
+		#	locations with special characters in them
+		if unicode(elem, "UTF-8") in countries:
+			student.setCountry(unicode(elem, "UTF-8"))
+		elif unicode(elem, "UTF-8") in cities:
+			student.setCity(unicode(elem, "UTF-8"))
+		# Regions are a more general term for both states and
+		#	regions like the "San Francisco Bay Area". While
+		#	both the state and region information are stored
+		#	in the same dictionary, they are treated as unique
+		#	cases (e.g. San Francisco Bay Area is a region
+		#	specified by the student, but they may also specify
+		#	California as their state. The student can be found
+		#	with both search queries)
+		elif unicode(elem, "UTF-8") in states:
+			student.setState(unicode(elem, "UTF-8"))
+		else:
+			student.setRegion(unicode(elem, "UTF-8"))
+	return student
+
+# Omits quotations and potential white space from the elements in the given array;
+#	used for cleaning the location information array of extraneous characters 
 def clean(arr):
 	for i in xrange(0, len(arr)):
 		arr[i] = arr[i].strip("\",\n, ")
 	return arr
 
+# Locates the first and last (if provided) names; it also provides
+#	the start index of the location information (indicated with "" 
+#	marks) in info_arr
 def findName(info_arr):
 	index = 0
 	length = len(info_arr) - 1
@@ -238,16 +265,6 @@ def findName(info_arr):
 	else:
 		return (info_arr[0], info_arr[1], 2)
 
-def reconstructLocation(location_list):
-	result = ""
-	for elem in location_list:
-		stripped = elem.lstrip("\"").rstrip("\",\n")
-		result += (stripped + ",")
-	return result.rstrip("\",\ ")
-
 start_time = time.time()
 
 main(sys.argv)
-
-print ("--- %s seconds ---" % (time.time() - start_time))
-
