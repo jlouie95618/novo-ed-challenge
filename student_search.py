@@ -1,6 +1,6 @@
 import sys, time, geonamescache
-from geopy.geocoders import Nominatim # currently unused
-from geopy.distance import great_circle # currently unused
+# from geopy.geocoders import Nominatim # currently unused; intended for further implementations of program
+# from geopy.distance import great_circle # currently unused; intended for further implementations of program
 
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
@@ -29,8 +29,33 @@ Task:
 
 	Bonus user story 2: Student lives in China, she can't find anyone from China in her class, she wants to find a remote team; and wants to have an easy time setting up meetings and working with her team. Is there anyways you can reframe the location search problem, use the location data, and help her find teammates?
 
-	Data: 
-	https://docs.google.com/a/novoed.com/spreadsheets/d/15mEigqCJxOcSiP-5VLHwUHt9vBGBQ7tY7ixiCUfcBwE
+Directions:
+	This is a Python implementation of a student location based search.
+		The user is able to provide a comma separated file (CSV format),
+		to use as the program run's database. If no file is provided, the
+		program will not run and provide a message to the user. Once the
+		program begins to run, the user will be asked whether they want
+		to conduct a student search. If yes, they will have to specify
+		what particular parameter they want to use to search students by 
+		(countries, which utilize the flag "C", cities, which utilize the 
+		flag "c", or regions, which utilize the flag "r"). Location strings
+		inputted by the user must match that of the locations in the database,
+		otherwise no result will be found. The location search by category 
+		will run until the user enters a location that is present in the database
+		(or they terminate the program with control-C). The user is able to
+		search students as many times as they wish. Termination occurs when any
+		string other than "yes" or "y" is provided to prompt to initiate a search.
+
+Assumptions:
+ - Currently all locations are only defined as the user has provided
+ 	in their database (i.e. a student who only provides "Prague", can
+ 	only be found with the city search query of "Prague").
+ - Location parameters/details that are not defined as a country, city,
+ 	or state within the US, is assumed to be a generally defined "region"
+ 	(i.e. "Stanford" is a "region" because it is neither a state or city, 
+ 	just as the "San Francisco Bay Area" is also a "region").
+ - The only information provided to the user on a student search is the
+ 	student's name
 """
 
 ######### Instance Variables #########
