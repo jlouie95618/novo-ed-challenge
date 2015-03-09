@@ -1,7 +1,6 @@
 import sys, time, geonamescache
-from geopy.geocoders import Nominatim
-from geopy.distance import great_circle
-
+from geopy.geocoders import Nominatim # currently unused
+from geopy.distance import great_circle # currently unused
 
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
@@ -34,6 +33,8 @@ Task:
 	https://docs.google.com/a/novoed.com/spreadsheets/d/15mEigqCJxOcSiP-5VLHwUHt9vBGBQ7tY7ixiCUfcBwE
 """
 
+######### Instance Variables #########
+
 gc = geonamescache.GeonamesCache()
 countries_dict = gc.get_countries_by_names()
 countries = countries_dict.keys()
@@ -41,6 +42,8 @@ cities_dict = gc.get_cities()
 cities = [cities_dict[city].get("name") for city in cities_dict]
 states_dict = gc.get_us_states_by_names()
 states = states_dict.keys()
+
+######### Class Definitions #########
 
 class Student(object):
 	"""docstring for Student"""
@@ -138,6 +141,8 @@ class LocationDatabase(object):
 		if category == "country": return self.location_by_country[location]
 		elif category == "city": return self.location_by_city[location]
 		else: return self.location_by_region[location]
+
+######### Main Program #########
 
 def main(args):
 	if args > 1:
